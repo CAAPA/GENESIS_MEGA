@@ -82,7 +82,12 @@ plotQQ(mega$Score.pval[(mega$MAF >= 0.01) & (mega$MAF < 0.05)],
 #### CAAPA METAL
 
 ```{r, echo=FALSE}
-
+control.frq <- read.table("AA_chr2_controls_freq.frq", stringsAsFactors = F, head=T)[,c(2,5)]
+case.frq <- read.table("AA_chr2_cases_freq.frq", stringsAsFactors = F, head=T)[,c(2,5)]
+meta.sub <- meta[meta$MAF >= 0.05,]
+meta.sub <- meta.sub[order(meta.sub$PVAL),]
+meta.sub <- meta.sub[1:10,]
+caapa <- merge(meta.sub, mega[,c("SNP", "Score.pval")])
 
 ```
 
