@@ -19,10 +19,10 @@ header1="header1_"${1}
 header2="header2_"${1}
 variants1="variants1_"${1}
 variants2="variants2_"${1}
-#cat AA_chr2.dose.vcf |head -n 10000 | grep "^#" | sed -e '2d;11d;12d;13d' > $header1			###grab the headers
-#cat AA_chr2.dose.vcf |grep -v "^#" > $variants1				###grab the non-headers
-#gunzip -c /gpfs/barnes_share/dcl01_data_aniket/data/CAAPA_jhuGRAAD_BDOS_032416/UCSF_SF/imputed/chr2.info.gz |head -n 10000 | grep "^SNP" > $header2
-#gunzip -c /gpfs/barnes_share/dcl01_data_aniket/data/CAAPA_jhuGRAAD_BDOS_032416/UCSF_SF/imputed/chr2.info.gz |grep -v "^SNP" > $variants2
+cat AA_chr2.dose.vcf |head -n 10000 | grep "^#" | sed -e '2d;11d;12d;13d' > $header1			###grab the headers
+cat AA_chr2.dose.vcf |grep -v "^#" > $variants1				###grab the non-headers
+gunzip -c /gpfs/barnes_share/dcl01_data_aniket/data/CAAPA_jhuGRAAD_BDOS_032416/UCSF_SF/imputed/chr2.info.gz |head -n 10000 | grep "^SNP" > $header2
+gunzip -c /gpfs/barnes_share/dcl01_data_aniket/data/CAAPA_jhuGRAAD_BDOS_032416/UCSF_SF/imputed/chr2.info.gz |grep -v "^SNP" > $variants2
   #split into chunks with 100000 lines
 split -d -l 100000 $variants1 ${1}.dose
 split -d -l 100000 $variants2 ${1}.cut
