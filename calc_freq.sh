@@ -1,9 +1,9 @@
 #!/bin/bash
 
-plink --vcf AA_chr2.dose.vcf --freq --out AA_chr2_freq
+#plink --vcf AA_chr2.dose.vcf --freq --out AA_chr2_freq
 
 grep 1$ AA_pheno.txt | cut -f1 -d' ' > tmp_ids.txt
-vcftools  AA_chr2.dose.vcf \
+vcftools --vcf  AA_chr2.dose.vcf \
          --keep tmp_ids.txt \
          --recode --stdout >  controls.dose.vcf
 vcftools controls.dose.vcf \
@@ -13,7 +13,7 @@ rm controls.dose.vcf
 rm tmp_ids.txt
 
 grep 2$ AA_pheno.txt | cut -f1 -d' ' > tmp_ids.txt
-vcftools  AA_chr2.dose.vcf \
+vcftools --vcf AA_chr2.dose.vcf \
          --keep tmp_ids.txt \
          --recode --stdout >  cases.dose.vcf
 vcftools cases.dose.vcf \
