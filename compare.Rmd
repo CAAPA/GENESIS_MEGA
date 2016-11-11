@@ -1,0 +1,89 @@
+---
+title: "Compare QQ plots"
+output: html_document
+---
+
+In this analysis, I compare the power of combing African American association statistics via a meta-analysis, 
+vs. running a mega African American association analysis (where the imputed genotype data is combined and a single
+association model is run). I chose chromosome 2 to do this evaluation on.
+
+```{r, echo=FALSE}
+#Setup input files
+#system("calc_freq.sh")
+
+#Load function to draw QQ plots
+plotQQ <- function(p.vals, main) {
+  observed <- sort(p.vals)
+  lobs <- -(log10(observed))
+  expected <- c(1:length(observed))
+  lexp <- -(log10(expected / (length(expected)+1)))
+  inflation.factor <- ( round(median(qchisq(1-p.vals,1)) / qchisq(0.5,1),4) )
+  plot(c(0,10), c(0,10), col="red", lwd=1, type="l", 
+       xlab="Expected (-logP)", ylab="Observed (-logP)", 
+       xlim=c(0,10), ylim=c(0,10), 
+       las=1, xaxs="i", yaxs="i", bty="l", main=main)
+  points(lexp, lobs, pch=23, cex=.1, bg="black")
+  text(7, 2, bquote(lambda == .(inflation.factor)))
+}
+
+```
+
+### Chromosome 2 QQ plot comparison
+
+#### CAAPA METAL
+
+```{r, echo=FALSE, fig.width=10, fig.height=5.5}
+## QQ plots
+#meta <- read.table("/gpfs/barnes_share/caapa_metal/data/output/chr2_aa.txt", stringsAsFactors = F)
+meta <- read.table("meta_aa_chr2.txt", stringsAsFactors = F)
+names(meta) <- c("SNP", "PVAL")
+frq <- read.table("AA_chr2_freq.frq", stringsAsFactors = F, head=T)[,c(2,5)]
+meta <- merge(meta, frq)
+
+par(mfrow=c(1,2))
+meta.common <- meta[meta$MAF >= 0.05,]
+plotQQ(meta.common$PVAL, 
+       "Common SNPs (MAF >= 0.05)")
+meta.rare <- meta[meta$MAF < 0.05,]
+plotQQ(meta.rare$PVAL, 
+       "Rare and Less Common SNPs (MAF < 0.05)")
+```
+
+```{r, echo=FALSE, fig.width=10, fig.height=5.5}
+par(mfrow=c(1,2))
+meta.rare <- meta[(meta$MAF >= 0.01) & (meta$MAF < 0.05),]
+plotQQ(meta.rare$PVAL, 
+       "Less Common SNPs (0.01 <= MAF < 0.05)")
+hist(meta$PVAL[meta$MAF < 0.01], breaks=100, xlab="P-value", main="P-value histogram rare SNPs (MAF < 0.01)")
+```
+
+#### GENESIS MEGA
+
+```{r, echo=FALSE, fig.width=10, fig.height=5.5}
+## QQ plots
+mega <- read.table("chr2_results_info.txt", stringsAsFactors = F, head=T)
+
+par(mfrow=c(1,2))
+plotQQ(mega$Score.pval[mega$MAF >= 0.05], 
+       "Common SNPs (MAF >= 0.05)")
+plotQQ(mega$Score.pval[mega$MAF < 0.05],
+       "Rare and Less Common SNPs (MAF < 0.05)")
+```
+
+```{r, echo=FALSE, fig.width=10, fig.height=5.5}
+par(mfrow=c(1,2))
+plotQQ(mega$Score.pval[(mega$MAF >= 0.01) & (mega$MAF < 0.05)],
+       "Less Common SNPs (0.01 <= MAF < 0.05)")
+
+```
+
+### Top 10 common SNPs comparison
+
+#### CAAPA METAL
+
+```{r, echo=FALSE}
+
+
+```
+
+#### GENESIS MEGA
