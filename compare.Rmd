@@ -36,25 +36,25 @@ plotQQ <- function(p.vals, main) {
 ## QQ plots
 #meta <- read.table("/gpfs/barnes_share/caapa_metal/data/output/chr2_aa.txt", stringsAsFactors = F)
 meta <- read.table("meta_aa_chr2.txt", stringsAsFactors = F)
-names(meta) <- c("SNP", "PVAL")
+names(meta) <- c("SNP", "META_A1", "META_A2", "Weight", "Zscore", "P-value", "Direction")
 frq <- read.table("AA_chr2_freq.frq", stringsAsFactors = F, head=T)[,c(2,5)]
 meta <- merge(meta, frq)
 
-par(mfrow=c(1,2))
-meta.common <- meta[meta$MAF >= 0.05,]
-plotQQ(meta.common$PVAL, 
-       "Common SNPs (MAF >= 0.05)")
-meta.rare <- meta[meta$MAF < 0.05,]
-plotQQ(meta.rare$PVAL, 
-       "Rare and Less Common SNPs (MAF < 0.05)")
+# par(mfrow=c(1,2))
+# meta.common <- meta[meta$MAF >= 0.05,]
+# plotQQ(meta.common$"P-value", 
+#        "Common SNPs (MAF >= 0.05)")
+# meta.rare <- meta[meta$MAF < 0.05,]
+# plotQQ(meta.rare$"P-value", 
+#        "Rare and Less Common SNPs (MAF < 0.05)")
 ```
 
 ```{r, echo=FALSE, fig.width=10, fig.height=5.5}
-par(mfrow=c(1,2))
-meta.rare <- meta[(meta$MAF >= 0.01) & (meta$MAF < 0.05),]
-plotQQ(meta.rare$PVAL, 
-       "Less Common SNPs (0.01 <= MAF < 0.05)")
-hist(meta$PVAL[meta$MAF < 0.01], breaks=100, xlab="P-value", main="P-value histogram rare SNPs (MAF < 0.01)")
+# par(mfrow=c(1,2))
+# meta.rare <- meta[(meta$MAF >= 0.01) & (meta$MAF < 0.05),]
+# plotQQ(meta.rare$"P-value", 
+#        "Less Common SNPs (0.01 <= MAF < 0.05)")
+# hist(meta$P-value[meta$MAF < 0.01], breaks=100, xlab="P-value", main="P-value histogram rare SNPs (MAF < 0.01)")
 ```
 
 #### GENESIS MEGA
@@ -63,17 +63,17 @@ hist(meta$PVAL[meta$MAF < 0.01], breaks=100, xlab="P-value", main="P-value histo
 ## QQ plots
 mega <- read.table("chr2_results_info.txt", stringsAsFactors = F, head=T)
 
-par(mfrow=c(1,2))
-plotQQ(mega$Score.pval[mega$MAF >= 0.05], 
-       "Common SNPs (MAF >= 0.05)")
-plotQQ(mega$Score.pval[mega$MAF < 0.05],
-       "Rare and Less Common SNPs (MAF < 0.05)")
+# par(mfrow=c(1,2))
+# plotQQ(mega$Score.pval[mega$MAF >= 0.05], 
+#        "Common SNPs (MAF >= 0.05)")
+# plotQQ(mega$Score.pval[mega$MAF < 0.05],
+#        "Rare and Less Common SNPs (MAF < 0.05)")
 ```
 
 ```{r, echo=FALSE, fig.width=10, fig.height=5.5}
-par(mfrow=c(1,2))
-plotQQ(mega$Score.pval[(mega$MAF >= 0.01) & (mega$MAF < 0.05)],
-       "Less Common SNPs (0.01 <= MAF < 0.05)")
+# par(mfrow=c(1,2))
+# plotQQ(mega$Score.pval[(mega$MAF >= 0.01) & (mega$MAF < 0.05)],
+#        "Less Common SNPs (0.01 <= MAF < 0.05)")
 
 ```
 
@@ -82,13 +82,92 @@ plotQQ(mega$Score.pval[(mega$MAF >= 0.01) & (mega$MAF < 0.05)],
 #### CAAPA METAL
 
 ```{r, echo=FALSE}
-control.frq <- read.table("AA_chr2_controls_freq.frq", stringsAsFactors = F, head=T)[,c(2,5)]
-case.frq <- read.table("AA_chr2_cases_freq.frq", stringsAsFactors = F, head=T)[,c(2,5)]
-meta.sub <- meta[meta$MAF >= 0.05,]
-meta.sub <- meta.sub[order(meta.sub$PVAL),]
-meta.sub <- meta.sub[1:10,]
-caapa <- merge(meta.sub, mega[,c("SNP", "Score.pval")])
+control.frq <- read.table("AA_chr2_controls_freq.frq", stringsAsFactors = F, head=T)[,c(2,5,6)]
+case.frq <- read.table("AA_chr2_cases_freq.frq", stringsAsFactors = F, head=T)[,c(2,5,6)]
+control.frq$SNP <- paste("2", control.frq$POS, sep=":")
+case.frq$SNP <- paste("2", case.frq$POS, sep=":")
+names(control.frq)[c(2,3)] <- c("CONTROL.A1.F1", "CONTROL.A2.F2")
+names(case.frq)[c(2,3)] <- c("CASE.A1.F1", "CASE.A2.F2")
 
+meta.sub <- meta[meta$MAF >= 0.05,]
+meta.sub <- meta.sub[order(meta.sub$"P-value"),]
+meta.sub <- meta.sub[1:10,]
+top.meta <- merge(meta.sub, 
+               mega[,c("SNP", "Score.pval", "Score", "Var", "Score.Stat")])
+top.meta <- merge(top.meta, case.frq[,-1])
+top.meta <- merge(top.meta, control.frq[,-1])
+
+top.meta <- top.meta[order(top.meta$"P-value"),]
+knitr::kable(top.meta)
 ```
 
 #### GENESIS MEGA
+
+```{r, echo=FALSE}
+mega.sub <- mega[mega$MAF >= 0.05,]
+mega.sub <- mega.sub[order(mega.sub$Score.pval),]
+mega.sub <- mega.sub[1:10,]
+top.mega <- merge(mega.sub[,c("SNP", "Score.pval", "Score", "Var", "Score.Stat")],
+                  meta)
+top.mega <- merge(top.mega, case.frq[,-1])
+top.mega <- merge(top.mega, control.frq[,-1])
+
+top.mega <- top.mega[order(top.mega$Score.pval),]
+knitr::kable(top.mega)
+```
+
+#### Theories
+
+##### Meta
+
+```{r, echo=FALSE}
+snp.summary <- read.delim("~/Remote/OneDrive - The University of Colorado Denver/CAAPA_GWAS/caapa_call_presentations/caapa_2016_08_09/top_snp_summary/data/output/snp_summary.txt")
+knitr::kable(snp.summary)
+```
+
+###### Incorrect p-values within cohorts
+
+That seems unlikely. According to the SNP summary above for the top chromsome 2 hit, p-values appear proportional to differences in case/control frequency. 
+
+###### Incorrect directions
+
+That seems unlikely. According to the SNP summary above for the top chromsome 2 hit, the direction of the effect matches the case/control frequecy (is positive when an allele is more frequent in cases, and negative when an allele is more frequent in controls). The one exception is BRIDGE, but the p-value in BRIDGE is very close to 1, so this may be due to PC adjustment and the very small sample size of this cohort (only 85 subjects). See also 
+OneDrive: CAAPA_GWAS/analyses/check_METAL_effect_direction
+
+###### Incorrect weights/bug in METAL script
+
+That is unlikely. Code inspection and manual recalculation of the weights of the metal commands (found at https://github.com/CAAPA/metal/blob/master/scripts/metal_cmds.txt ) revealed no errors. The below manual calculation is also concordant with the metal output (the slight discrepancy in combined Z and p-value can probably be explained by using rounded p-values)
+
+```{r}
+p.vals <- snp.summary$p.val[!(snp.summary$study %in% (c("SAPPHIRE", "BAGS", "GALA")))]
+z.vals <- qnorm(p.vals/2, lower.tail = F)
+weights <- c(-round(2/(1/44 + 1/283)),
+             -round(2/(1/101 + 1/531)),
+             -round(2/(1/64 + 1/21)),
+             round(2/(1/296 + 1/45)),
+             round(2/(1/114 + 1/156)),
+             -round(2/(1/396 + 1/385)),
+             -round(2/(1/1001 + 1/691)),
+             -round(2/(1/303 + 1/1528)))
+z <- sum(z.vals*weights)/sqrt(sum(weights^2))
+(z)
+(pnorm(z, lower.tail = F))
+```
+
+##### Mega
+
+###### Incorrect SNP merging
+
+###### Incorrect sample labelling
+
+###### Large variance across cohorts
+
+###### Adjustment for study
+
+###### Adjustment for PCs
+
+###### Adjustment for relatedness
+
+###### PQL estimation errors
+
+I.e. GENESIS is broken.
