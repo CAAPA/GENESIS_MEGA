@@ -1,7 +1,7 @@
 import os
 
 col_name_file=open("tmp_column_names.txt")
-out_file=open("tmp_subject_order.txt")
+out_file=open("tmp_subject_order.txt", "w")
 
 line=col_name_file.readline()
 elements=line.strip().split()
