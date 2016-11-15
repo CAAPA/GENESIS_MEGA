@@ -34,16 +34,13 @@ for (file in pheno.files) {
 }
 
 #Create IDs for GENESIS format
-attach(geno_all)
-geno_order <- geno_all[order(ORDER),]
-detach(geno_all)
-PATID <- rownames(geno_order)
-geno_order2 <- cbind(PATID,geno_order)
+PATID <- ORDER
+geno_order <- cbind(PATID,geno_all)
 
 #Create and write final fam file for GENESIS
-final_fam <- geno_order2[c("FAMILY","PATID","FATHER","MOTHER","SEX","AFFSTAT")]
+final_fam <- geno_order[c("FAMILY","PATID","FATHER","MOTHER","SEX","AFFSTAT")]
 write.table(final_fam,"AA_king.fam",sep="\t",row.names=F,col.names=F,quote=F)
 
 #Create and write final pheno file for GENESIS
-final_pheno <- geno_order2[c("PATID","AFFSTAT", "STUDY")]
+final_pheno <- geno_order[c("PATID","AFFSTAT", "STUDY")]
 write.table(final_pheno,"AA_pheno2.txt",sep="\t",row.names=F,col.names=F,quote=F)
