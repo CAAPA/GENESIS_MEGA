@@ -1,6 +1,7 @@
 ###Read in PLINK fam file
 geno_king <- read.table("AA_king_orig.fam", stringsAsFactors = F)
 names(geno_king) <- c("FAMILY","PATIENT","FATHER","MOTHER","SEX","CASE")
+geno_king$ORDER <- 1:dim(geno_king)[1]
 
 ###Read in phenotype file
 geno_pheno <- read.table("AA_pheno.txt",header=F,na.string="NA",fill=T)
@@ -9,6 +10,7 @@ after <- cbind(as.data.frame(tmp), geno_pheno$V3)
 names(after) <- c("PATIENT", "PATID2", "AFFSTAT")
 after[after == 0] <- NA
 geno_all = merge(geno_king,after,by="PATIENT",all.x=T)
+geno_all <- geno_all[order(geno_all$ORDER),]
 
 #Add study info
 geno_all$STUDY <- NA
@@ -33,7 +35,7 @@ for (file in pheno.files) {
 
 #Create IDs for GENESIS format
 attach(geno_all)
-geno_order <- geno_all[order(PATIENT),]
+geno_order <- geno_all[order(ORDER),]
 detach(geno_all)
 PATID <- rownames(geno_order)
 geno_order2 <- cbind(PATID,geno_order)
