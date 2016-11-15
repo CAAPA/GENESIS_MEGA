@@ -34,7 +34,7 @@ for (file in pheno.files) {
 }
 
 #Create IDs for GENESIS format
-PATID <- ORDER
+PATID <- geno_all$ORDER
 geno_order <- cbind(PATID,geno_all)
 
 #Create and write final fam file for GENESIS
