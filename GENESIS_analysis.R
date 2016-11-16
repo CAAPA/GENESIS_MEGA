@@ -20,6 +20,6 @@ imputedDosageFile(input.files=c(dosefile,markfile,posfile),filename=gdsfile,chro
 gds <- GdsGenotypeReader(gdsfile)
 genoData <- GenotypeData(gds)
 geno <- getGenotype(genoData)
-nullmod.bin <- fitNullMM(scanData = scanAnnot, outcome = "pheno", covars = c("study", "pc6","pc10"), covMatList = covMatList, family=binomial(link = "logit"))
+nullmod.bin <- fitNullMM(scanData = scanAnnot, outcome = "pheno", covars = c("study", "pc1", "pc6","pc10"), covMatList = covMatList, family=binomial(link = "logit"))
 myassoc <- assocTestMM(genoData = genoData, nullMMobj = nullmod.bin, test="Score")
 write.table(myassoc,file=paste(file_name,"cut",subset_val,".results.txt",sep=''),sep="\t",row.names=F,col.names=T,quote=F)

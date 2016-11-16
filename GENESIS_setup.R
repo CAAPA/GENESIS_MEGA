@@ -45,7 +45,8 @@ study <- read.table("AA_pheno2.txt",header=F,na.string="NA", stringsAsFactors = 
 # 1 0.9040466 0.1777808 0.01558355
 
 mypcrel <- openfn.gds("AA_pcrelate.gds")
-scanAnnot <- ScanAnnotationDataFrame(data.frame(scanID = iids,pc6 = mypcair$vectors[,6],pc10 = mypcair$vectors[,10], pheno = pheno, study=study))
+scanAnnot <- ScanAnnotationDataFrame(data.frame(scanID = iids,pc1 = mypcair$vectors[,1],
+    pc6 = mypcair$vectors[,6],pc10 = mypcair$vectors[,10], pheno = pheno, study=study))
 covMatList <- list("Kin" = pcrelateMakeGRM(mypcrel))
 
 save(scanAnnot, covMatList, mypcair, file = "AA_GENESIS")
