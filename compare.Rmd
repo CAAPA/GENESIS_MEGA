@@ -5,11 +5,19 @@ output: html_document
 
 In this analysis, I compare the power of combing African American association statistics via a meta-analysis, 
 vs. running a mega African American association analysis (where the imputed genotype data is combined and a single
-association model is run). I chose chromosome 2 to do this evaluation on.
+association model is run using GENESIS, with the study included as a fixed effect covariate). 
+I chose chromosome 2 to do this evaluation on. 
+Note that due to difficulties of merging imputed VCF files with "missing" (Rsq-filtered) calls, the GENESIS 
+mega-analysis includes all SNPs (whereas for the meta-analysis, SNPs with low Rsq has been filtered out).
+
+### Observations
+
+* The top SNP (our top GWAS hit) is the top SNP in both analysis, with GENESIS results only being slightly less significant.
+* The top SNP lists change depending on whether you sort by METAL or GENESIS MEGA, but on the whole the p-values are concordant. 
+* There are more SNPs with p-values to the order of e-6 in METAL. Although the inflation factor of the METAL results indicate that there is some test statistic inflation caused by SNPs with MAF < 0.01, looking at the p-value histogram, this seems to be due to p-values in the 0.1-0.4 range, and does not affect lower order p-values. (What is strange is that this MAF filter of 0.01 is not required over the whole genome.)
 
 ```{r, echo=FALSE}
 #Setup input files
-#system("calc_freq.sh")
 
 #Load function to draw QQ plots
 plotQQ <- function(p.vals, main) {
@@ -17,7 +25,7 @@ plotQQ <- function(p.vals, main) {
   lobs <- -(log10(observed))
   expected <- c(1:length(observed))
   lexp <- -(log10(expected / (length(expected)+1)))
-  inflation.factor <- ( round(median(qchisq(1-p.vals,1)) / qchisq(0.5,1),4) )
+  inflation.factor <- ( round(median(qchisq(1-p.vals,1), na.rm=T) / qchisq(0.5,1),4) )
   plot(c(0,10), c(0,10), col="red", lwd=1, type="l", 
        xlab="Expected (-logP)", ylab="Observed (-logP)", 
        xlim=c(0,10), ylim=c(0,10), 
@@ -30,31 +38,30 @@ plotQQ <- function(p.vals, main) {
 
 ### Chromosome 2 QQ plot comparison
 
-#### CAAPA METAL
+#### METAL
 
 ```{r, echo=FALSE, fig.width=10, fig.height=5.5}
 ## QQ plots
-#meta <- read.table("/gpfs/barnes_share/caapa_metal/data/output/chr2_aa.txt", stringsAsFactors = F)
 meta <- read.table("meta_aa_chr2.txt", stringsAsFactors = F)
 names(meta) <- c("SNP", "META_A1", "META_A2", "Weight", "Zscore", "P-value", "Direction")
 frq <- read.table("AA_chr2_freq.frq", stringsAsFactors = F, head=T)[,c(2,5)]
 meta <- merge(meta, frq)
 
-# par(mfrow=c(1,2))
-# meta.common <- meta[meta$MAF >= 0.05,]
-# plotQQ(meta.common$"P-value", 
-#        "Common SNPs (MAF >= 0.05)")
-# meta.rare <- meta[meta$MAF < 0.05,]
-# plotQQ(meta.rare$"P-value", 
-#        "Rare and Less Common SNPs (MAF < 0.05)")
+par(mfrow=c(1,2))
+meta.common <- meta[meta$MAF >= 0.05,]
+plotQQ(meta.common$"P-value", 
+       "Common SNPs (MAF >= 0.05)")
+meta.rare <- meta[meta$MAF < 0.05,]
+plotQQ(meta.rare$"P-value", 
+       "Rare and Less Common SNPs (MAF < 0.05)")
 ```
 
 ```{r, echo=FALSE, fig.width=10, fig.height=5.5}
-# par(mfrow=c(1,2))
-# meta.rare <- meta[(meta$MAF >= 0.01) & (meta$MAF < 0.05),]
-# plotQQ(meta.rare$"P-value", 
-#        "Less Common SNPs (0.01 <= MAF < 0.05)")
-# hist(meta$P-value[meta$MAF < 0.01], breaks=100, xlab="P-value", main="P-value histogram rare SNPs (MAF < 0.01)")
+par(mfrow=c(1,2))
+meta.rare <- meta[(meta$MAF >= 0.01) & (meta$MAF < 0.05),]
+plotQQ(meta.rare$"P-value", 
+       "Less Common SNPs (0.01 <= MAF < 0.05)")
+hist(meta$"P-value"[meta$MAF < 0.01], breaks=100, xlab="P-value", main="P-value histogram rare SNPs (MAF < 0.01)")
 ```
 
 #### GENESIS MEGA
@@ -63,23 +70,23 @@ meta <- merge(meta, frq)
 ## QQ plots
 mega <- read.table("chr2_results_info.txt", stringsAsFactors = F, head=T)
 
-# par(mfrow=c(1,2))
-# plotQQ(mega$Score.pval[mega$MAF >= 0.05], 
-#        "Common SNPs (MAF >= 0.05)")
-# plotQQ(mega$Score.pval[mega$MAF < 0.05],
-#        "Rare and Less Common SNPs (MAF < 0.05)")
+par(mfrow=c(1,2))
+plotQQ(mega$Score.pval[mega$MAF >= 0.05], 
+       "Common SNPs (MAF >= 0.05)")
+plotQQ(mega$Score.pval[mega$MAF < 0.05],
+       "Rare and Less Common SNPs (MAF < 0.05)")
 ```
 
 ```{r, echo=FALSE, fig.width=10, fig.height=5.5}
-# par(mfrow=c(1,2))
-# plotQQ(mega$Score.pval[(mega$MAF >= 0.01) & (mega$MAF < 0.05)],
-#        "Less Common SNPs (0.01 <= MAF < 0.05)")
+par(mfrow=c(1,2))
+plotQQ(mega$Score.pval[(mega$MAF >= 0.01) & (mega$MAF < 0.05)],
+       "Less Common SNPs (0.01 <= MAF < 0.05)")
 
 ```
 
 ### Top 10 common SNPs comparison
 
-#### CAAPA METAL
+#### METAL
 
 ```{r, echo=FALSE}
 control.frq <- read.table("AA_chr2_controls_freq.frq", stringsAsFactors = F, head=T)[,c(2,5,6)]
@@ -98,6 +105,8 @@ top.meta <- merge(top.meta, case.frq[,-1])
 top.meta <- merge(top.meta, control.frq[,-1])
 
 top.meta <- top.meta[order(top.meta$"P-value"),]
+top.meta$"P-value" <- formatC(top.meta$"P-value", 2, format="e")
+top.meta$Score.pval <- formatC(top.meta$Score.pval, 2, format="e")
 knitr::kable(top.meta)
 ```
 
@@ -113,61 +122,44 @@ top.mega <- merge(top.mega, case.frq[,-1])
 top.mega <- merge(top.mega, control.frq[,-1])
 
 top.mega <- top.mega[order(top.mega$Score.pval),]
+top.mega$"P-value" <- formatC(top.mega$"P-value", 2, format="e")
+top.mega$Score.pval <- formatC(top.mega$Score.pval, 2, format="e")
 knitr::kable(top.mega)
 ```
 
-#### Theories
+### Top 20 rare SNPs comparison
 
-##### Meta
+#### METAL
 
 ```{r, echo=FALSE}
-snp.summary <- read.delim("~/Remote/OneDrive - The University of Colorado Denver/CAAPA_GWAS/caapa_call_presentations/caapa_2016_08_09/top_snp_summary/data/output/snp_summary.txt")
-knitr::kable(snp.summary)
+meta.sub <- meta[meta$MAF < 0.05,]
+meta.sub <- meta.sub[order(meta.sub$"P-value"),]
+meta.sub <- meta.sub[1:20,]
+top.meta <- merge(meta.sub, 
+               mega[,c("SNP", "Score.pval", "Score", "Var", "Score.Stat")])
+top.meta <- merge(top.meta, case.frq[,-1])
+top.meta <- merge(top.meta, control.frq[,-1])
+
+top.meta <- top.meta[order(top.meta$"P-value"),]
+top.meta$"P-value" <- formatC(top.meta$"P-value", 2, format="e")
+top.meta$Score.pval <- formatC(top.meta$Score.pval, 2, format="e")
+knitr::kable(top.meta)
 ```
 
-###### Incorrect p-values within cohorts
+#### GENESIS MEGA
 
-That seems unlikely. According to the SNP summary above for the top chromsome 2 hit, p-values appear proportional to differences in case/control frequency. 
+```{r, echo=FALSE}
+mega.sub <- mega[mega$MAF < 0.05,]
+mega.sub <- mega.sub[order(mega.sub$Score.pval),]
+mega.sub <- mega.sub[1:20,]
+top.mega <- merge(mega.sub[,c("SNP", "Score.pval", "Score", "Var", "Score.Stat")],
+                  meta)
+top.mega <- merge(top.mega, case.frq[,-1])
+top.mega <- merge(top.mega, control.frq[,-1])
 
-###### Incorrect directions
-
-That seems unlikely. According to the SNP summary above for the top chromsome 2 hit, the direction of the effect matches the case/control frequecy (is positive when an allele is more frequent in cases, and negative when an allele is more frequent in controls). The one exception is BRIDGE, but the p-value in BRIDGE is very close to 1, so this may be due to PC adjustment and the very small sample size of this cohort (only 85 subjects). See also 
-OneDrive: CAAPA_GWAS/analyses/check_METAL_effect_direction
-
-###### Incorrect weights/bug in METAL script
-
-That is unlikely. Code inspection and manual recalculation of the weights of the metal commands (found at https://github.com/CAAPA/metal/blob/master/scripts/metal_cmds.txt ) revealed no errors. The below manual calculation is also concordant with the metal output (the slight discrepancy in combined Z and p-value can probably be explained by using rounded p-values)
-
-```{r}
-p.vals <- snp.summary$p.val[!(snp.summary$study %in% (c("SAPPHIRE", "BAGS", "GALA")))]
-z.vals <- qnorm(p.vals/2, lower.tail = F)
-weights <- c(-round(2/(1/44 + 1/283)),
-             -round(2/(1/101 + 1/531)),
-             -round(2/(1/64 + 1/21)),
-             round(2/(1/296 + 1/45)),
-             round(2/(1/114 + 1/156)),
-             -round(2/(1/396 + 1/385)),
-             -round(2/(1/1001 + 1/691)),
-             -round(2/(1/303 + 1/1528)))
-z <- sum(z.vals*weights)/sqrt(sum(weights^2))
-(z)
-(pnorm(z, lower.tail = F))
+top.mega <- top.mega[order(top.mega$Score.pval),]
+top.mega$"P-value" <- formatC(top.mega$"P-value", 2, format="e")
+top.mega$Score.pval <- formatC(top.mega$Score.pval, 2, format="e")
+knitr::kable(top.mega)
 ```
 
-##### Mega
-
-###### Incorrect SNP merging
-
-###### Incorrect sample labelling
-
-###### Large variance across cohorts
-
-###### Adjustment for study
-
-###### Adjustment for PCs
-
-###### Adjustment for relatedness
-
-###### PQL estimation errors
-
-I.e. GENESIS is broken.
